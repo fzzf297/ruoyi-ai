@@ -1,65 +1,203 @@
-# RuoYi 智能操作助手
+# ruoyi-ai Monorepo
 
-基于 [RuoYi-Vue-Plus](https://gitee.com/dromara/RuoYi-Vue-Plus) 的智能操作层，让用户用自然语言完成系统管理——查数据、改配置、跳转页面，不必在菜单和表单之间来回找。
+本仓库整合 `plus-ui` 前端与 `RuoYi-Cloud-Plus` 微服务后端，作为后续智能操作助手能力的工程基座。
 
-## 这是什么
+## 目录结构
 
-在 RuoYi 管理后台里嵌入一个 **AI 助手面板**。用户说「查一下张三最近登录记录」「打开用户管理」「把当前选中的用户停用」，助手理解意图后调用既有业务接口完成操作，而不是另建一套系统、也不直连数据库。
-
+```text
+/
+├─ apps/
+│  └─ web/                  # plus-ui
+├─ services/
+│  └─ cloud/                # RuoYi-Cloud-Plus
+├─ database/                # 数据库说明与后续迁移入口
+├─ infra/                   # 部署与基础设施说明
+├─ scripts/                 # 根目录统一命令入口
+├─ docs/
+│  ├─ upstream/             # 上游来源、版本和同步方式
+│  └─ original-root-readme.md
+├─ AGENTS.md
+├─ package.json
+└─ .env.example
 ```
-用户自然语言 → AI 助手面板 → Agent 服务 → RuoYi 现有 API → 业务数据
+
+原项目根 README 已原样归档到 [docs/original-root-readme.md](docs/original-root-readme.md)。
+
+## 环境要求
+
+| 组件 | 要求 | 依据 |
+|------|------|------|
+| Node.js | `>=20.19.0` | `apps/web/package.json` |
+| npm | `>=8.19.0` | `apps/web/package.json` |
+| JDK | 17，或上游 README 标识支持的 21 | `services/cloud/pom.xml` / 上游 README |
+| Maven | 本机 `mvn` | `RuoYi-Cloud-Plus` 未提供 Maven Wrapper |
+| Docker | Docker Compose v2 | `services/cloud/script/docker/docker-compose.yml` |
+
+Windows 优先使用 PowerShell 脚本。后端 Docker 编排复用上游配置，其中包含 `network_mode: host` 和 `/docker/...` 挂载路径；在 Windows 上建议使用 WSL2/Linux Docker 环境运行。
+
+## 统一命令
+
+根目录 `package.json` 只是命令入口，不改变前端和后端的独立构建边界。
+
+```bash
+npm run web:install
+npm run web:dev
+npm run web:build
+npm run web:lint
+npm run web:typecheck
+npm run cloud:compile
+npm run cloud:test
+npm run cloud:infra:up
+npm run cloud:infra:down
+npm run verify
 ```
 
-Agent 是 RuoYi 上的**智能操作层**，权限、数据范围、操作日志仍以 RuoYi 后端为准。
+Shell 环境可直接使用：
 
-## 我们解决的痛点
+```bash
+./scripts/monorepo.sh web:install
+./scripts/monorepo.sh verify
+```
 
-| 痛点 | 我们的做法 |
-|------|------------|
-| 后台功能多、菜单深，日常操作要找半天 | 用自然语言直接说意图，助手负责导航和查询 |
-| 通用 ChatBot 只能「聊」，不能真正改系统数据 | 所有操作走已注册工具 + RuoYi REST API，可查询、可写操作 |
-| AI 直接调接口容易越权、误操作 | 继承当前用户权限与数据范围；写操作必须确认后才执行 |
-| 大模型容易「编接口」、调错 API | 工具由 Manifest 驱动，LLM 只能在白名单工具里选择 |
-| 多轮对话里「张三」指谁不清楚 | 实体解析 + 消歧，多个候选必须让用户选，不自动猜 |
-| 出了问题难以追溯 | 全链路审计、确认快照、幂等防重复执行 |
+## 前端开发
 
-## 核心特色
+前端位于 `apps/web`，保持 plus-ui 原有 Node/Vite 工程。
 
-- **不侵入业务核心**：不改 RuoYi 权限与数据模型，复用现有 API 和登录态
-- **写操作可确认、可审计**：确认的是不可变执行计划（实体 ID、影响范围、幂等键），执行前再次校验权限与实体状态
-- **懂当前页面上下文**：支持「停用当前选中的用户」等基于页面选区的操作
-- **安全优先**：token 不落库；危险操作二次确认；prompt 注入与数据范围有专门防护
-- **可持续扩展**：新业务按 Manifest / YAML 接入，不必改 Agent 主循环；配套评估集与 CI 回归
+```bash
+npm run web:install
+npm run web:dev
+```
 
-## 能做什么（MVP）
+上游开发配置：
 
-- **导航**：「用户管理在哪」→ 自动打开对应页面
-- **查询**：用户列表、登录日志、部门树、角色、字典
-- **操作**：新增/修改/启停/删除用户（删除等高风险需二次确认）
-- **上下文**：读取当前页面路由、筛选条件、表格选中行
-- **交互**：缺参数会追问，多个「张三」会让你选，改数据前会弹出确认卡片
+- 前端端口：`80`
+- 开发 API 前缀：`/dev-api`
+- Vite Proxy：`/dev-api/**` -> `http://localhost:8080/**`
+- Axios baseURL：`import.meta.env.VITE_APP_BASE_API`
 
-## 技术栈
+## 后端开发
 
-| 层级 | 技术 |
+Cloud 后端位于 `services/cloud`，保持 RuoYi-Cloud-Plus 原有 Maven 多模块工程。
+
+```bash
+npm run cloud:compile
+npm run cloud:test
+```
+
+后端根 POM 默认跳过测试，测试命令固定使用 `-DskipTests=false`，并由脚本读取 Surefire XML 确认实际测试数大于 0。
+
+主要服务端口：
+
+| 服务 | 端口 |
 |------|------|
-| 前端 | Vue 3、Element Plus、Pinia（RuoYi-Vue-Plus） |
-| Agent 服务 | Python、FastAPI、LangGraph |
-| 业务后端 | RuoYi（Java / Spring Boot） |
-| 存储 | PostgreSQL、Redis |
+| Gateway | `8080` |
+| Auth | `9210` |
+| System | `9201` |
+| Gen | `9202` |
+| Job | `9203` |
+| Resource | `9204` |
+| Workflow | `9205` |
+| Monitor | `9100` |
+| SnailJob | `8800` |
 
-## 文档
+## 初始化
 
-| 文档 | 说明 |
-|------|------|
-| [技术设计方案 v4.0](docs/design/README.md) | 完整架构、安全模型、协议、路线图 |
-| [前端技术文档](docs/frontend/README.md) | 面板、SSE、事件渲染、组件与开发任务 |
-| [Agent 后端技术文档](docs/backend/README.md) | LangGraph、工具、实体解析、确认与幂等 |
+基础设施优先复用：
 
-## 项目状态
+- Docker Compose：`services/cloud/script/docker/docker-compose.yml`
+- Nacos 配置：`services/cloud/script/config/nacos`
+- SQL 脚本：`services/cloud/script/sql`
 
-当前阶段为**方案与设计文档**，代码实现按 P0–P4 路线图推进（基础骨架 → 导航 → 查询 → 实体解析 → 写操作确认）。
+启动基础服务：
 
-## 协作
+```bash
+npm run cloud:infra:up
+```
 
-欢迎通过 Issue / PR 参与。仓库：https://github.com/fzzf297/ruoyi-ai
+最小基础服务包括 MySQL、Nacos、Redis、MinIO、SnailJob。
+
+数据库初始化：
+
+| 数据库 | SQL |
+|--------|-----|
+| `ry-cloud` | `services/cloud/script/sql/ry-cloud.sql` |
+| `ry-job` | `services/cloud/script/sql/ry-job.sql` |
+| `ry-workflow` | `services/cloud/script/sql/ry-workflow.sql` |
+| `ry-seata` | `services/cloud/script/sql/ry-seata.sql`，仅启用 Seata 时需要 |
+
+Nacos 初始化：
+
+1. 登录 `http://localhost:8848/nacos`。
+2. 创建或使用 `dev` namespace。
+3. 将 `services/cloud/script/config/nacos/*.yml` 和 `seata-server.properties` 导入 `DEFAULT_GROUP`。
+4. 启动服务前校对 `datasource.yml`：上游 Nacos 示例密码是 `password`，Docker Compose MySQL root 密码是 `ruoyi123`，两者必须统一。
+
+Redis 默认配置来自 `application-common.yml`：`localhost:6379`，密码 `ruoyi123`。
+
+## 前端到 Gateway 链路
+
+开发环境：
+
+```text
+Browser
+  -> http://localhost:80
+  -> /dev-api/auth/code
+  -> Vite Proxy rewrite /dev-api
+  -> http://localhost:8080/auth/code
+  -> Gateway
+  -> ruoyi-auth
+```
+
+生产环境：
+
+```text
+Browser
+  -> /prod-api/**
+  -> Nginx location /prod-api/
+  -> Gateway 127.0.0.1:8080
+```
+
+Gateway 路由保持上游 Nacos 配置：
+
+- `/auth/**` -> `ruoyi-auth`
+- `/system/**`、`/monitor/**` -> `ruoyi-system`
+- `/tool/**` -> `ruoyi-gen`
+- `/resource/**` -> `ruoyi-resource`
+- `/workflow/**`、`/warm-flow-ui/**` -> `ruoyi-workflow`
+- `/demo/**` -> `ruoyi-demo`
+
+前端不得直接访问内部微服务端口。
+
+## 验证
+
+结构验收：
+
+```bash
+Test-Path apps/web/.git
+Test-Path services/cloud/.git
+Test-Path apps/web/LICENSE
+Test-Path services/cloud/LICENSE
+Test-Path services/monolith
+```
+
+全量验证：
+
+```bash
+npm run verify
+```
+
+`verify` 会执行前端依赖安装、ESLint、TypeScript 检查、生产构建、后端编译和后端测试。缺少 Docker、数据库、Redis、Nacos 或外部服务时，后端启动类或集成测试可能失败，应按失败日志补齐环境后重试。
+
+## 上游记录
+
+- [plus-ui](docs/upstream/plus-ui.md)
+- [RuoYi-Cloud-Plus](docs/upstream/ruoyi-cloud-plus.md)
+
+## 架构边界
+
+- 只使用 `plus-ui + RuoYi-Cloud-Plus`。
+- 不引入 `RuoYi-Vue-Plus`。
+- 不新增 `services/monolith`。
+- 不创建根 Maven 聚合 POM。
+- 不合并 Gateway、Auth、System、Resource、Workflow 等 Cloud 微服务边界。
+- 根目录脚本只做编排，前后端仍按各自工具链独立构建。

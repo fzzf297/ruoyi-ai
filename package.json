@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json.schemastore.org/package",
+  "name": "ruoyi-ai-monorepo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "web:install": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/monorepo.ps1 web:install",
+    "web:dev": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/monorepo.ps1 web:dev",
+    "web:build": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/monorepo.ps1 web:build",
+    "web:lint": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/monorepo.ps1 web:lint",
+    "web:typecheck": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/monorepo.ps1 web:typecheck",
+    "cloud:compile": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/monorepo.ps1 cloud:compile",
+    "cloud:test": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/monorepo.ps1 cloud:test",
+    "cloud:infra:up": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/monorepo.ps1 cloud:infra:up",
+    "cloud:infra:down": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/monorepo.ps1 cloud:infra:down",
+    "verify": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/monorepo.ps1 verify"
+  }
+}
