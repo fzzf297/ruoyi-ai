@@ -8,42 +8,33 @@ Thumbs.db
 *.swp
 *.swo
 
-# Local / temp
+# Local tooling and temporary files
 .temp/
 .cursor/
+.codegraph/
 *.log
 *.log.gz
 
-# Python (future agent-service)
+# Python
 __pycache__/
 *.py[cod]
 .venv/
 venv/
+.pytest_cache/
+.ruff_cache/
+.pycache/
 .env
 .env.*
 !.env.example
-!apps/web/.env.development
-!apps/web/.env.production
 
-# Node (future frontend)
+# Local data
+admin-api/data/
+
+# Root npm command wrapper
 node_modules/
-dist/
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-apps/web/node_modules/
-apps/web/dist/
-apps/web/auto-imports.d.ts
-apps/web/components.d.ts
-apps/web/src/types/auto-imports.d.ts
-apps/web/src/types/components.d.ts
-apps/web/.eslintrc-auto-import.json
-
-# Java / Maven
-target/
-services/cloud/**/target/
-.flattened-pom.xml
-*.xml.versionsBackup

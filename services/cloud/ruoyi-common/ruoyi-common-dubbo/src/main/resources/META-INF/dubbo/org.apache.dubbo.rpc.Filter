@@ -1,1 +1,0 @@
-dubboRequestFilter=org.dromara.common.dubbo.filter.DubboRequestFilter
