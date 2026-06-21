@@ -3,6 +3,7 @@ set -eu
 
 ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 WEB_DIR="$ROOT_DIR/apps/web"
+ADMIN_DIR="$ROOT_DIR/admin-api"
 CLOUD_POM="$ROOT_DIR/services/cloud/pom.xml"
 CLOUD_DIR="$ROOT_DIR/services/cloud"
 DOCKER_COMPOSE="$CLOUD_DIR/script/docker/docker-compose.yml"
@@ -83,6 +84,21 @@ case "${1:-}" in
     require_cmd docker
     docker compose -f "$DOCKER_COMPOSE" down
     ;;
+  admin:dev)
+    require_cmd python3
+    cd "$ADMIN_DIR"
+    python3 -m uvicorn app.main:app --reload --host 0.0.0.0 --port "${ADMIN_API_PORT:-8000}"
+    ;;
+  admin:test)
+    require_cmd python3
+    cd "$ADMIN_DIR"
+    PYTHONPYCACHEPREFIX="$ADMIN_DIR/.pycache" python3 -m pytest
+    ;;
+  admin:lint)
+    require_cmd python3
+    cd "$ADMIN_DIR"
+    python3 -m ruff check
+    ;;
   verify)
     "$0" web:install
     "$0" web:lint
@@ -92,7 +108,7 @@ case "${1:-}" in
     "$0" cloud:test
     ;;
   *)
-    echo "Usage: $0 {web:install|web:dev|web:build|web:lint|web:typecheck|cloud:compile|cloud:test|cloud:infra:up|cloud:infra:down|verify}" >&2
+    echo "Usage: $0 {web:install|web:dev|web:build|web:lint|web:typecheck|cloud:compile|cloud:test|cloud:infra:up|cloud:infra:down|admin:dev|admin:test|admin:lint|verify}" >&2
     exit 1
     ;;
 esac

@@ -13,6 +13,9 @@
     "cloud:test": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/monorepo.ps1 cloud:test",
     "cloud:infra:up": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/monorepo.ps1 cloud:infra:up",
     "cloud:infra:down": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/monorepo.ps1 cloud:infra:down",
+    "admin:dev": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/monorepo.ps1 admin:dev",
+    "admin:test": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/monorepo.ps1 admin:test",
+    "admin:lint": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/monorepo.ps1 admin:lint",
     "verify": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/monorepo.ps1 verify"
   }
 }

@@ -8,6 +8,7 @@ Set-StrictMode -Version Latest
 
 $Root = Resolve-Path (Join-Path $PSScriptRoot "..")
 $WebDir = Join-Path $Root "apps/web"
+$AdminDir = Join-Path $Root "admin-api"
 $CloudPom = Join-Path $Root "services/cloud/pom.xml"
 $CloudDir = Join-Path $Root "services/cloud"
 $DockerCompose = Join-Path $CloudDir "script/docker/docker-compose.yml"
@@ -121,6 +122,25 @@ function Invoke-CloudInfraDown {
     Invoke-External docker compose -f $DockerCompose down
 }
 
+function Invoke-AdminDev {
+    Assert-Command python
+    $Port = if ($env:ADMIN_API_PORT) { $env:ADMIN_API_PORT } else { "8000" }
+    Invoke-InDirectory $AdminDir { Invoke-External python -m uvicorn app.main:app --reload --host 0.0.0.0 --port $Port }
+}
+
+function Invoke-AdminTest {
+    Assert-Command python
+    Invoke-InDirectory $AdminDir {
+        $env:PYTHONPYCACHEPREFIX = Join-Path $AdminDir ".pycache"
+        Invoke-External python -m pytest
+    }
+}
+
+function Invoke-AdminLint {
+    Assert-Command python
+    Invoke-InDirectory $AdminDir { Invoke-External python -m ruff check }
+}
+
 function Invoke-Verify {
     Invoke-WebInstall
     Invoke-WebLint
@@ -140,6 +160,9 @@ switch ($Command) {
     "cloud:test" { Invoke-CloudTest }
     "cloud:infra:up" { Invoke-CloudInfraUp }
     "cloud:infra:down" { Invoke-CloudInfraDown }
+    "admin:dev" { Invoke-AdminDev }
+    "admin:test" { Invoke-AdminTest }
+    "admin:lint" { Invoke-AdminLint }
     "verify" { Invoke-Verify }
     default { throw "Unknown command: $Command" }
 }
