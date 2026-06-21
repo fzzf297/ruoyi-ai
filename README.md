@@ -7,8 +7,7 @@
 ```text
 /
 ├─ admin-api/              # FastAPI 应用、迁移、测试和 OpenAPI
-├─ README.md
-└─ .env.example
+└─ README.md
 ```
 
 ## 环境要求
@@ -46,7 +45,7 @@ python3 -m pytest
 
 ## 配置
 
-配置项示例位于 `.env.example`。本地运行前至少应覆盖：
+服务通过系统环境变量读取配置。生产或共享环境至少应覆盖：
 
 ```text
 ADMIN_API_SECRET_KEY
