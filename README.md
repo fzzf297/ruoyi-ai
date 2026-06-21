@@ -7,10 +7,7 @@
 ```text
 /
 ├─ admin-api/              # FastAPI 应用、迁移、测试和 OpenAPI
-├─ docs/                   # 保留的产品与历史文档
-├─ scripts/                # Shell / PowerShell 命令入口
-├─ AGENTS.md
-├─ package.json
+├─ README.md
 └─ .env.example
 ```
 
@@ -18,7 +15,6 @@
 
 - Python `>=3.9`
 - 开发依赖：pytest、Ruff
-- 可选：Node.js/npm，仅用于调用根目录 PowerShell 命令包装
 
 ## 安装
 
@@ -29,16 +25,9 @@ python3 -m pip install -e ".[dev]"
 
 ## 启动
 
-macOS/Linux：
-
 ```bash
-sh scripts/monorepo.sh admin:dev
-```
-
-Windows PowerShell：
-
-```powershell
-./scripts/monorepo.ps1 admin:dev
+cd admin-api
+python3 -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 默认地址：
@@ -47,25 +36,13 @@ Windows PowerShell：
 - Swagger UI：`http://localhost:8000/docs`
 - OpenAPI：`http://localhost:8000/openapi.json`
 
-## 命令
-
-macOS/Linux：
+## 验证
 
 ```bash
-sh scripts/monorepo.sh admin:lint
-sh scripts/monorepo.sh admin:test
-sh scripts/monorepo.sh verify
+cd admin-api
+python3 -m ruff check
+python3 -m pytest
 ```
-
-Windows PowerShell 或根目录 npm 包装：
-
-```powershell
-npm run admin:lint
-npm run admin:test
-npm run verify
-```
-
-`verify` 会依次执行 Ruff 和 pytest，任一命令失败都会返回非零状态。
 
 ## 配置
 

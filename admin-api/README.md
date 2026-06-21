@@ -12,7 +12,7 @@ python3 -m pip install -e ".[dev]"
 ## Run
 
 ```bash
-sh ../../scripts/monorepo.sh admin:dev
+python3 -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 默认服务地址：
@@ -85,6 +85,6 @@ YAML 只作为声明式配置保存和解析，不执行其中任何代码。
 ## Verify
 
 ```bash
-sh ../../scripts/monorepo.sh admin:test
-sh ../../scripts/monorepo.sh admin:lint
+python3 -m pytest
+python3 -m ruff check
 ```
