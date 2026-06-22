@@ -1,13 +1,19 @@
-# Admin API Workspace
+# RuoYi AI Workspace
 
-本仓库当前只维护独立管理后台后端 `admin-api`。服务基于 FastAPI 与 SQLite，用于管理项目、页面配置、APP 接口定义及声明式 YAML 配置。
+本仓库按技术形态划分为后端与前端。当前唯一可运行服务是
+`backend/admin`：一个基于 FastAPI 与 SQLite 的独立管理后台后端。
 
 ## 目录结构
 
 ```text
 /
-├─ admin-api/              # FastAPI 应用、迁移、测试和 OpenAPI
-└─ README.md
+├─ backend/
+│  ├─ admin/             # 现有 FastAPI 管理后台后端
+│  └─ agent/             # Agent 后端预留边界，当前无运行时
+├─ frontend/
+│  └─ admin/             # 管理后台前端预留边界，当前无运行时
+├─ docs/                    # 产品与历史文档
+└─ scripts/                 # 根命令包装
 ```
 
 ## 环境要求
@@ -18,14 +24,14 @@
 ## 安装
 
 ```bash
-cd admin-api
+cd backend/admin
 python3 -m pip install -e ".[dev]"
 ```
 
 ## 启动
 
 ```bash
-cd admin-api
+cd backend/admin
 python3 -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
@@ -38,7 +44,7 @@ python3 -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ## 验证
 
 ```bash
-cd admin-api
+cd backend/admin
 python3 -m ruff check
 python3 -m pytest
 ```
@@ -52,7 +58,8 @@ ADMIN_API_SECRET_KEY
 ADMIN_API_DEFAULT_ADMIN_PASSWORD
 ```
 
-不得提交真实密码、Token 或密钥。SQLite 默认数据文件位于 `admin-api/data/admin-api.db`，该目录已忽略。
+不得提交真实密码、Token 或密钥。SQLite 默认数据文件位于
+`backend/admin/data/admin-api.db`，该目录已忽略。
 
 ## API
 
@@ -64,4 +71,4 @@ ADMIN_API_DEFAULT_ADMIN_PASSWORD
 - `/api/admin/interfaces/*`：APP 接口定义、YAML 配置及历史版本。
 - `/api/app/projects/*`：APP 读取侧接口。
 
-完整契约以 `admin-api/openapi.json` 和运行时 `/openapi.json` 为准。
+完整契约以 `backend/admin/openapi.json` 和运行时 `/openapi.json` 为准。

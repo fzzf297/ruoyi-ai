@@ -1,11 +1,11 @@
-# Admin API
+# Admin Backend
 
 独立轻量管理后台后端，使用 FastAPI + SQLite。它负责管理后台登录、项目配置、页面配置、APP 接口定义和接口 YAML 配置。
 
 ## Install
 
 ```bash
-cd admin-api
+cd backend/admin
 python3 -m pip install -e ".[dev]"
 ```
 
