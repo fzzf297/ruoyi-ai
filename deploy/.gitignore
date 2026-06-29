@@ -1,0 +1,6 @@
+# Offline bundle artifacts (built on x86 build machine, not committed)
+*.tar
+*.tar.gz
+bundle/
+docker-static.tgz
+docker-compose-linux-x86_64

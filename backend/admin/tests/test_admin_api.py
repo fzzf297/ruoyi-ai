@@ -168,6 +168,8 @@ def test_admin_crud_yaml_and_public_reads() -> None:
         public_pages = client.get("/api/app/projects/demo/pages")
         assert public_pages.status_code == 200
         assert public_pages.json()["total"] == 1
+        assert public_pages.json()["page"] == 1
+        assert public_pages.json()["pageSize"] == 20
 
         public_interfaces = client.get("/api/app/projects/demo/interfaces")
         assert public_interfaces.status_code == 200

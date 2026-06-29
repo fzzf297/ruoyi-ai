@@ -1,0 +1,53 @@
+version: "3.8"
+
+services:
+  admin:
+    platform: linux/amd64
+    build:
+      context: ./backend/admin
+    image: ruoyi-ai/admin:latest
+    container_name: ruoyi-ai-admin
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      - ADMIN_API_SECRET_KEY=${ADMIN_API_SECRET_KEY}
+      - ADMIN_API_DEFAULT_ADMIN_PASSWORD=${ADMIN_API_DEFAULT_ADMIN_PASSWORD}
+    volumes:
+      - admin-data:/app/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  agent:
+    platform: linux/amd64
+    build:
+      context: ./backend/agent
+    image: ruoyi-ai/agent:latest
+    container_name: ruoyi-ai-agent
+    ports:
+      - "127.0.0.1:8001:8001"
+    environment:
+      - AGENT_LLM_BASE_URL=${AGENT_LLM_BASE_URL}
+      - AGENT_LLM_API_KEY=${AGENT_LLM_API_KEY}
+      - AGENT_LLM_MODEL=${AGENT_LLM_MODEL}
+      - AGENT_ADMIN_BASE_URL=http://admin:8000
+      - AGENT_RATE_LIMIT_PER_MINUTE=${AGENT_RATE_LIMIT_PER_MINUTE:-30}
+      - AGENT_MAX_SESSION_MESSAGES=${AGENT_MAX_SESSION_MESSAGES:-100}
+    depends_on:
+      admin:
+        condition: service_healthy
+    volumes:
+      - agent-data:/app/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  admin-data:
+  agent-data:

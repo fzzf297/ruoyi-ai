@@ -1,0 +1,28 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.pycache/
+
+# Local data and secrets
+data/
+.env
+.env.*
+!.env.example
+
+# Tests and docs
+tests/
+README.md
+*.md
+
+# Docker
+docker-compose*.yml
+Dockerfile*
