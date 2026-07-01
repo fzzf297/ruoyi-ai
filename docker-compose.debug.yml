@@ -1,0 +1,22 @@
+# Low-memory debug overlay: tighter limits when agent is needed.
+#
+#   sh deploy/debug-stack.sh --with-ai
+#   → docker compose -f docker-compose.prod.yml -f docker-compose.debug.yml --profile ai up -d
+
+services:
+  agent:
+    profiles: ["ai"]
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+        reservations:
+          memory: 64M
+
+  admin:
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 64M

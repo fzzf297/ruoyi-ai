@@ -1,0 +1,6 @@
+# Overlay: let ruoyi-ai nginx reach classic RuoYi on host port 8080.
+
+services:
+  nginx:
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

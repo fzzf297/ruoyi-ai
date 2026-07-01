@@ -2989,6 +2989,12 @@
             "title": "Description",
             "default": ""
           },
+          "baseUrl": {
+            "type": "string",
+            "maxLength": 500,
+            "title": "Baseurl",
+            "default": ""
+          },
           "status": {
             "$ref": "#/components/schemas/Status",
             "default": "enabled"
@@ -3019,6 +3025,10 @@
             "type": "string",
             "title": "Description"
           },
+          "baseUrl": {
+            "type": "string",
+            "title": "Baseurl"
+          },
           "status": {
             "type": "string",
             "title": "Status"
@@ -3038,6 +3048,7 @@
           "code",
           "name",
           "description",
+          "baseUrl",
           "status",
           "createdAt",
           "updatedAt"
@@ -3083,6 +3094,18 @@
               }
             ],
             "title": "Description"
+          },
+          "baseUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baseurl"
           },
           "status": {
             "anyOf": [

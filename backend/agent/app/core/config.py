@@ -2,6 +2,8 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
+from app.core.project_secrets import load_all_project_secrets
+
 BASE_DIR = Path(__file__).resolve().parents[2]
 
 
@@ -33,6 +35,9 @@ class Settings:
     admin_timeout: int
     rate_limit_per_minute: int
     max_session_messages: int
+    project_secrets: dict[str, dict[str, str]]
+    third_party_max_response_bytes: int
+    third_party_allowed_hosts: list[str]
 
 
 def load_settings() -> Settings:
@@ -50,6 +55,13 @@ def load_settings() -> Settings:
         admin_timeout=int(os.getenv("AGENT_ADMIN_TIMEOUT", "10")),
         rate_limit_per_minute=int(os.getenv("AGENT_RATE_LIMIT_PER_MINUTE", "30")),
         max_session_messages=int(os.getenv("AGENT_MAX_SESSION_MESSAGES", "100")),
+        project_secrets=load_all_project_secrets(),
+        third_party_max_response_bytes=int(
+            os.getenv("AGENT_THIRD_PARTY_MAX_RESPONSE_BYTES", "1048576")
+        ),
+        third_party_allowed_hosts=_csv(
+            os.getenv("AGENT_THIRD_PARTY_ALLOWED_HOSTS", "")
+        ),
     )
 
 

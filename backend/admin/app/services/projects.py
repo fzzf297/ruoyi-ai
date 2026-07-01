@@ -17,6 +17,7 @@ def _out(row: sqlite3.Row) -> ProjectOut:
         code=row["code"],
         name=row["name"],
         description=row["description"],
+        baseUrl=row["base_url"],
         status=row["status"],
         createdAt=row["created_at"],
         updatedAt=row["updated_at"],
@@ -55,10 +56,16 @@ def create_project(conn: sqlite3.Connection, payload: ProjectCreate) -> ProjectO
     try:
         cursor = conn.execute(
             """
-            INSERT INTO projects(code, name, description, status)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO projects(code, name, description, base_url, status)
+            VALUES (?, ?, ?, ?, ?)
             """,
-            (payload.code, payload.name, payload.description, _enum_value(payload.status)),
+            (
+                payload.code,
+                payload.name,
+                payload.description,
+                payload.baseUrl,
+                _enum_value(payload.status),
+            ),
         )
     except sqlite3.IntegrityError as exc:
         unique_or_conflict(exc, "Project code already exists")
@@ -78,6 +85,7 @@ def update_project(conn: sqlite3.Connection, project_id: int, payload: ProjectUp
         "code": "code",
         "name": "name",
         "description": "description",
+        "baseUrl": "base_url",
         "status": "status",
     }.items():
         if field in data:

@@ -53,6 +53,11 @@ services:
       - AGENT_ADMIN_BASE_URL=http://admin:8000
       - AGENT_RATE_LIMIT_PER_MINUTE=${AGENT_RATE_LIMIT_PER_MINUTE:-30}
       - AGENT_MAX_SESSION_MESSAGES=${AGENT_MAX_SESSION_MESSAGES:-100}
+      - AGENT_PROJECT_SECRETS=${AGENT_PROJECT_SECRETS:-}
+      - AGENT_THIRD_PARTY_ALLOWED_HOSTS=${AGENT_THIRD_PARTY_ALLOWED_HOSTS:-}
+      - AGENT_THIRD_PARTY_MAX_RESPONSE_BYTES=${AGENT_THIRD_PARTY_MAX_RESPONSE_BYTES:-1048576}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       admin:
         condition: service_healthy
@@ -88,8 +93,6 @@ services:
       - ./deploy/nginx.docker.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       admin:
-        condition: service_healthy
-      agent:
         condition: service_healthy
     restart: unless-stopped
     logging:

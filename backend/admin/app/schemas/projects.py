@@ -10,6 +10,7 @@ class ProjectCreate(ApiModel):
     code: str = Field(..., min_length=2, max_length=64)
     name: str = Field(..., min_length=1, max_length=120)
     description: str = Field(default="", max_length=500)
+    baseUrl: str = Field(default="", max_length=500)
     status: Status = Status.enabled
 
     @field_validator("code")
@@ -28,6 +29,7 @@ class ProjectUpdate(ApiModel):
     code: Optional[str] = Field(default=None, min_length=2, max_length=64)
     name: Optional[str] = Field(default=None, min_length=1, max_length=120)
     description: Optional[str] = Field(default=None, max_length=500)
+    baseUrl: Optional[str] = Field(default=None, max_length=500)
     status: Optional[Status] = None
 
     @field_validator("code")
@@ -49,6 +51,7 @@ class ProjectOut(ApiModel):
     code: str
     name: str
     description: str
+    baseUrl: str
     status: str
     createdAt: str
     updatedAt: str

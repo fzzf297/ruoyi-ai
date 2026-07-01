@@ -1,11 +1,69 @@
 import json
 import logging
+import re
+from typing import Any, Optional
 
 from langchain_core.tools import tool
 
+from app.services import interface_executor
 from app.services.admin_client import admin_client
 
 logger = logging.getLogger(__name__)
+
+_PLACEHOLDER_RE = re.compile(r"\{([a-zA-Z_][a-zA-Z0-9_.]*)\}")
+
+
+def _scan_placeholders(value: Any, location: str, params: dict[str, set[str]]) -> None:
+    if isinstance(value, str):
+        for name in _PLACEHOLDER_RE.findall(value):
+            if name.startswith("secret."):
+                continue
+            params.setdefault(name, set()).add(location)
+    elif isinstance(value, dict):
+        for item in value.values():
+            _scan_placeholders(item, location, params)
+    elif isinstance(value, list):
+        for item in value:
+            _scan_placeholders(item, location, params)
+
+
+def _extract_interface_params(config: dict[str, Any]) -> list[dict[str, Any]]:
+    request = config.get("request")
+    if not isinstance(request, dict):
+        return []
+    found: dict[str, set[str]] = {}
+    path = request.get("path")
+    if isinstance(path, str):
+        _scan_placeholders(path, "path", found)
+    for location in ("query", "body", "headers"):
+        _scan_placeholders(request.get(location), location, found)
+    return [
+        {"name": name, "locations": sorted(locations)}
+        for name, locations in sorted(found.items())
+    ]
+
+
+def _extract_auth_metadata(config: dict[str, Any]) -> tuple[bool, Optional[str]]:
+    auth = config.get("auth")
+    if not isinstance(auth, dict):
+        return False, None
+    auth_required = auth.get("useProjectAuth") is True
+    interface_code = auth.get("interfaceCode")
+    if isinstance(interface_code, str) and interface_code:
+        return auth_required, interface_code
+    return auth_required, None
+
+
+def _is_listable_executable_api(config: dict[str, Any], item_method: str) -> bool:
+    if config.get("kind") != "api" or config.get("readOnly") is not True:
+        return False
+    method = item_method
+    request = config.get("request")
+    if isinstance(request, dict):
+        config_method = request.get("method")
+        if isinstance(config_method, str):
+            method = config_method
+    return method in interface_executor.ALLOWED_EXECUTE_METHODS
 
 
 @tool
@@ -23,6 +81,7 @@ async def list_projects(page: int = 1, page_size: int = 20) -> str:
                     "code": p.code,
                     "name": p.name,
                     "description": p.description,
+                    "baseUrl": p.baseUrl,
                     "status": p.status,
                 }
                 for p in result.items
@@ -112,6 +171,7 @@ async def get_project(project_code: str) -> str:
             "code": result.code,
             "name": result.name,
             "description": result.description,
+            "baseUrl": result.baseUrl,
             "status": result.status,
             "createdAt": result.createdAt,
             "updatedAt": result.updatedAt,
@@ -254,3 +314,80 @@ async def list_interface_versions(
         },
         ensure_ascii=False,
     )
+
+
+@tool
+async def list_executable_interfaces(
+    project_code: str, page: int = 1, page_size: int = 20
+) -> str:
+    """List executable read-only business APIs for a project.
+    Only includes kind=api, readOnly=true, and request methods GET or POST.
+    Returns params (non-secret placeholders), authRequired, and authInterfaceCode per item.
+    Use this before execute_interface when the user asks for business data queries.
+    """
+    items = []
+    fetch_page = 1
+    fetch_page_size = 100
+    while True:
+        result = await admin_client.list_interfaces(
+            project_code, page=fetch_page, page_size=fetch_page_size
+        )
+        for item in result.items:
+            config = item.parsedConfig or {}
+            if _is_listable_executable_api(config, item.method):
+                auth_required, auth_interface_code = _extract_auth_metadata(config)
+                items.append(
+                    {
+                        "code": item.code,
+                        "name": item.name,
+                        "method": item.method,
+                        "path": item.path,
+                        "description": item.description,
+                        "readOnly": True,
+                        "params": _extract_interface_params(config),
+                        "authRequired": auth_required,
+                        "authInterfaceCode": auth_interface_code,
+                    }
+                )
+        if fetch_page * fetch_page_size >= result.total:
+            break
+        fetch_page += 1
+    start = max(page - 1, 0) * page_size
+    page_items = items[start : start + page_size]
+    logger.info(
+        "tool list_executable_interfaces: project=%s total=%s",
+        project_code,
+        len(items),
+    )
+    return json.dumps(
+        {
+            "projectCode": project_code,
+            "items": page_items,
+            "total": len(items),
+            "page": page,
+            "pageSize": page_size,
+        },
+        ensure_ascii=False,
+    )
+
+
+@tool
+async def execute_interface(
+    project_code: str,
+    interface_code: str,
+    params: Optional[dict] = None,
+) -> str:
+    """Execute a configured read-only third-party API interface (kind=api, readOnly=true).
+    Use for business data queries only; write interfaces are not supported.
+    """
+    result = await interface_executor.execute_interface(
+        project_code=project_code,
+        interface_code=interface_code,
+        params=params or {},
+    )
+    logger.info(
+        "tool execute_interface: project=%s interface=%s",
+        project_code,
+        interface_code,
+    )
+    return json.dumps(result, ensure_ascii=False)

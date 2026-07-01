@@ -99,6 +99,14 @@ AGENT_LLM_MODEL
 AGENT_ADMIN_BASE_URL
 ```
 
+三方只读业务接口执行还会读取：
+
+```text
+AGENT_PROJECT_SECRETS
+AGENT_THIRD_PARTY_ALLOWED_HOSTS
+AGENT_THIRD_PARTY_MAX_RESPONSE_BYTES
+```
+
 示例见 `backend/agent/.env.example`。SQLite 默认数据文件位于
 `backend/agent/data/agent.db`，该目录已忽略。
 
@@ -122,7 +130,7 @@ AGENT_ADMIN_BASE_URL
 - `GET /api/agent/sessions/{id}/history`：查询会话历史。
 - `POST /api/agent/sessions/{id}/messages`：发送消息（SSE 流式响应）。
 
-agent 自身接口不鉴权，通过 HTTP 调用 admin 的 `/api/app/*` 只读接口获取数据。
+agent 自身接口不鉴权，通过 HTTP 调用 admin 的 `/api/app/*` 获取项目与接口配置；对标记为 `kind: api` 且 `readOnly: true` 的接口，Agent 会按项目 `baseUrl` 调用三方只读业务 API（认证通过三方 bridge 与 `AGENT_PROJECT_SECRETS` 注入）。
 
 ## Docker
 
@@ -136,6 +144,9 @@ docker compose up --build -d
 - agent：`http://localhost:8001`
 
 生产部署前请替换 `.env` 中的默认密钥与密码。
+如使用预置的 `ruoyi-classic` bridge 示例，需在 `.env` 中设置
+`AGENT_THIRD_PARTY_ALLOWED_HOSTS=host.docker.internal`，并配置对应
+`AGENT_PROJECT_SECRETS`。
 
 ## 负载测试
 

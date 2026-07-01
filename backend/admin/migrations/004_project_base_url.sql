@@ -1,0 +1,1 @@
+ALTER TABLE projects ADD COLUMN base_url TEXT NOT NULL DEFAULT '';

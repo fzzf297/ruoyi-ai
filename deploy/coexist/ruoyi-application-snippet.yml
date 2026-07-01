@@ -1,0 +1,19 @@
+# application-druid.yml 片段 — 经典 RuoYi 连接本机 MySQL（与 ruoyi-ai 无关）
+#
+# 文件位置（克隆仓库后）：
+#   ruoyi-admin/src/main/resources/application-druid.yml
+
+# spring:
+#   datasource:
+#     druid:
+#       master:
+#         url: jdbc:mysql://127.0.0.1:3306/ry?useUnicode=true&characterEncoding=utf8&serverTimezone=GMT%2B8
+#         username: ruoyi
+#         password: <MYSQL_PASSWORD from .env>
+
+# application.yml 建议：
+#   server:
+#     port: 8080
+#     servlet:
+#       context-path: /
+#   # 不要占用 80，由 ruoyi-ai 的 nginx 统一反代

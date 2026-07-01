@@ -25,6 +25,7 @@ PROJECT_BODY = {
     "code": "demo",
     "name": "Demo",
     "description": "",
+    "baseUrl": "http://third-party.local",
     "status": "enabled",
     "createdAt": "2026-01-01T00:00:00",
     "updatedAt": "2026-01-01T00:00:00",
@@ -107,6 +108,7 @@ async def test_get_project() -> None:
         client = AdminClient("http://localhost:8000", 5)
         result = await client.get_project("demo")
         assert result.code == "demo"
+        assert result.baseUrl == "http://third-party.local"
 
 
 @pytest.mark.anyio

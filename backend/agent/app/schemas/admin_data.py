@@ -8,6 +8,7 @@ class ProjectOut(ApiModel):
     code: str
     name: str
     description: str
+    baseUrl: str
     status: str
     createdAt: str
     updatedAt: str

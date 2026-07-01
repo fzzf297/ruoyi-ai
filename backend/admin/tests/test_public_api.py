@@ -25,13 +25,26 @@ def auth_headers(client: TestClient) -> dict:
     return {"Authorization": "Bearer {}".format(response.json()["accessToken"])}
 
 
-def create_project(client: TestClient, headers: dict, code: str, status: str = "enabled") -> int:
+def create_project(
+    client: TestClient,
+    headers: dict,
+    code: str,
+    status: str = "enabled",
+    base_url: str = "",
+) -> int:
     response = client.post(
         "/api/admin/projects",
-        json={"code": code, "name": code.title(), "description": "", "status": status},
+        json={
+            "code": code,
+            "name": code.title(),
+            "description": "",
+            "status": status,
+            "baseUrl": base_url,
+        },
         headers=headers,
     )
     assert response.status_code == 201
+    assert response.json()["baseUrl"] == base_url
     return response.json()["id"]
 
 
@@ -86,7 +99,14 @@ def save_interface_config(
     client: TestClient, headers: dict, interface_id: int, path: str = "/items"
 ) -> None:
     yaml_text = (
-        f"version: 1\nrequest:\n  method: GET\n  path: {path}\nresponse:\n  dataPath: data\n"
+        f"version: 1\n"
+        f"kind: api\n"
+        f"readOnly: true\n"
+        f"request:\n"
+        f"  method: GET\n"
+        f"  path: {path}\n"
+        f"response:\n"
+        f"  dataPath: data\n"
     )
     response = client.put(
         f"/api/admin/interfaces/{interface_id}/config-yaml",
@@ -100,7 +120,7 @@ def test_list_public_projects_enabled_filter_pagination_and_empty() -> None:
     with TestClient(app) as client:
         headers = auth_headers(client)
 
-        create_project(client, headers, "alpha")
+        create_project(client, headers, "alpha", base_url="http://alpha.local")
         create_project(client, headers, "beta")
         create_project(client, headers, "gamma", status="disabled")
 
@@ -114,6 +134,10 @@ def test_list_public_projects_enabled_filter_pagination_and_empty() -> None:
         assert "alpha" in codes
         assert "beta" in codes
         assert "gamma" not in codes
+        alpha = next(item for item in body["items"] if item["code"] == "alpha")
+        beta = next(item for item in body["items"] if item["code"] == "beta")
+        assert alpha["baseUrl"] == "http://alpha.local"
+        assert beta["baseUrl"] == ""
 
         page1 = client.get("/api/app/projects?page=1&pageSize=1")
         assert page1.status_code == 200
@@ -139,13 +163,14 @@ def test_get_public_project() -> None:
         not_found = client.get("/api/app/projects/nope")
         assert not_found.status_code == 404
 
-        create_project(client, headers, "delta")
+        create_project(client, headers, "delta", base_url="http://delta.local")
         create_project(client, headers, "epsilon", status="disabled")
 
         ok = client.get("/api/app/projects/delta")
         assert ok.status_code == 200
         assert ok.json()["code"] == "delta"
         assert ok.json()["status"] == "enabled"
+        assert ok.json()["baseUrl"] == "http://delta.local"
 
         disabled = client.get("/api/app/projects/epsilon")
         assert disabled.status_code == 404

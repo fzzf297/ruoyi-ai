@@ -195,9 +195,53 @@ def validate_yaml_config(yaml_text: str) -> dict[str, Any]:
         )
     if not isinstance(path, str) or not path.startswith("/"):
         raise AppError("request.path must start with /", status_code=400)
+    _validate_request_mappings(request)
     if "version" not in parsed:
         raise AppError("YAML must contain version", status_code=400)
+    kind = parsed.get("kind", "api")
+    if kind not in {"api", "auth"}:
+        raise AppError("kind must be one of api, auth", status_code=400)
+    if kind == "auth":
+        response = parsed.get("response")
+        if not isinstance(response, dict):
+            raise AppError("auth YAML must contain response mapping", status_code=400)
+        header_name_path = response.get("headerNamePath")
+        header_value_path = response.get("headerValuePath")
+        token_path = response.get("tokenPath")
+        token_prefix = response.get("tokenPrefix", "")
+        if not isinstance(header_name_path, str) or not header_name_path:
+            raise AppError("response.headerNamePath is required", status_code=400)
+        has_header_value = isinstance(header_value_path, str) and bool(header_value_path)
+        has_token = isinstance(token_path, str) and bool(token_path)
+        if not has_header_value and not has_token:
+            raise AppError(
+                "auth YAML must contain response.headerValuePath or response.tokenPath",
+                status_code=400,
+            )
+        if "tokenPrefix" in response and not isinstance(token_prefix, str):
+            raise AppError("response.tokenPrefix must be a string", status_code=400)
+    if kind == "api":
+        read_only = parsed.get("readOnly")
+        if not isinstance(read_only, bool):
+            raise AppError("api YAML must set readOnly: true or readOnly: false", status_code=400)
+        auth = parsed.get("auth")
+        if auth is not None:
+            if not isinstance(auth, dict):
+                raise AppError("auth must be a mapping", status_code=400)
+            interface_code = auth.get("interfaceCode")
+            if interface_code is not None and (
+                not isinstance(interface_code, str) or not interface_code.strip()
+            ):
+                raise AppError(
+                    "auth.interfaceCode must be a non-empty string", status_code=400
+                )
     return parsed
+
+
+def _validate_request_mappings(request: dict[str, Any]) -> None:
+    for key in ("query", "body", "headers"):
+        if key in request and not isinstance(request[key], dict):
+            raise AppError(f"request.{key} must be a mapping", status_code=400)
 
 
 def _reject_forbidden_keys(value: Any) -> None:
